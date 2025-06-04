@@ -55,6 +55,7 @@ def generate_schedule_greedy(course_list, mahasiswa_preferences):
 def generate_schedule_backtracking(course_list, mahasiswa_preferences):
     n = len(course_list)
     schedule = [None] * n
+    found = [False]  # pakai list agar mutable di nested scope
 
     def is_valid(slot, index):
         for i in range(index):
@@ -66,6 +67,7 @@ def generate_schedule_backtracking(course_list, mahasiswa_preferences):
 
     def backtrack(index):
         if index == n:
+            found[0] = True
             return True
         course = course_list[index]
         for slot in course.slots:
@@ -77,7 +79,13 @@ def generate_schedule_backtracking(course_list, mahasiswa_preferences):
         return False
 
     backtrack(0)
-    return [(course_list[i].course_name, schedule[i] if schedule[i] else "Tidak tersedia jadwal") for i in range(n)]
+
+    # Jika tidak ketemu solusi penuh, kembalikan jadwal parsial (greedy-like fallback)
+    if not found[0]:
+        return [(course_list[i].course_name, schedule[i] if schedule[i] else "Tidak tersedia jadwal (parsial)") for i in range(n)]
+
+    return [(course_list[i].course_name, schedule[i]) for i in range(n)]
+
 
 def generate_schedule_simulated_annealing(course_list, mahasiswa_preferences, max_iter=1000, temp=100.0, cooling_rate=0.95):
     current_solution = []
