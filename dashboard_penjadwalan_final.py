@@ -152,12 +152,12 @@ if dosen_file and mahasiswa_file:
 
         if algo == "Greedy":
             jadwal = generate_schedule_greedy(course_list, preferensi_mahasiswa)
-        elif algo == "Backtracking":\n                jadwal = generate_schedule_backtracking(course_list, preferensi_mahasiswa)
-            st.warning("Algoritma Backtracking belum diimplementasikan.")
-            jadwal = []
-        elif algo == "Simulated Annealing":\n                jadwal = generate_schedule_simulated_annealing(course_list, preferensi_mahasiswa)
-            st.warning("Algoritma Simulated Annealing belum diimplementasikan.")
-            jadwal = []
+       elif algo == "Backtracking":
+    jadwal = generate_schedule_backtracking(course_list, preferensi_mahasiswa)
+
+elif algo == "Simulated Annealing":
+    jadwal = generate_schedule_simulated_annealing(course_list, preferensi_mahasiswa)
+
 
         end = time.time()
         if jadwal:
