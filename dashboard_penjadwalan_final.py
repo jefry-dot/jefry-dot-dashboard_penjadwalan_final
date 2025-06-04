@@ -3,6 +3,8 @@ import streamlit as st
 import pandas as pd
 from collections import defaultdict
 import time
+import random
+import math
 
 st.set_page_config(page_title="Penjadwalan Kuliah", layout="wide")
 
@@ -50,7 +52,6 @@ def generate_schedule_greedy(course_list, mahasiswa_preferences):
         schedule[i] = best_slot
     return [(course_list[i].course_name, schedule[i] if schedule[i] else "Tidak tersedia jadwal") for i in range(n)]
 
-
 def generate_schedule_backtracking(course_list, mahasiswa_preferences):
     n = len(course_list)
     schedule = [None] * n
@@ -78,13 +79,7 @@ def generate_schedule_backtracking(course_list, mahasiswa_preferences):
     backtrack(0)
     return [(course_list[i].course_name, schedule[i] if schedule[i] else "Tidak tersedia jadwal") for i in range(n)]
 
-
-
-import random
-import math
-
 def generate_schedule_simulated_annealing(course_list, mahasiswa_preferences, max_iter=1000, temp=100.0, cooling_rate=0.95):
-    # Representasi solusi awal: slot pertama yang tersedia untuk setiap course
     current_solution = []
     for course in course_list:
         valid_slots = [slot for slot in course.slots if slot not in mahasiswa_preferences.get(course.course_name, set())]
@@ -94,7 +89,7 @@ def generate_schedule_simulated_annealing(course_list, mahasiswa_preferences, ma
         conflict = 0
         for i in range(len(solution)):
             if not solution[i]:
-                conflict += 5  # penalti jika tidak dapat slot
+                conflict += 5
                 continue
             for j in range(i + 1, len(solution)):
                 if do_slots_overlap(solution[i], solution[j]):
@@ -127,7 +122,6 @@ def generate_schedule_simulated_annealing(course_list, mahasiswa_preferences, ma
 
     return [(course_list[i].course_name, best_solution[i] if best_solution[i] else "Tidak tersedia jadwal") for i in range(len(course_list))]
 
-
 # --- Streamlit UI ---
 st.title("📅 Dashboard Penjadwalan Kuliah")
 
@@ -138,7 +132,6 @@ if dosen_file and mahasiswa_file:
     dosen_df = pd.read_csv(dosen_file)
     mahasiswa_df = pd.read_csv(mahasiswa_file)
 
-    # Persiapan data
     dosen_grouped = defaultdict(list)
     for _, row in dosen_df.iterrows():
         dosen_grouped[row["MataKuliah"]].append(row["SlotPreferensi"])
@@ -152,12 +145,10 @@ if dosen_file and mahasiswa_file:
 
         if algo == "Greedy":
             jadwal = generate_schedule_greedy(course_list, preferensi_mahasiswa)
-       elif algo == "Backtracking":
-    jadwal = generate_schedule_backtracking(course_list, preferensi_mahasiswa)
-
-elif algo == "Simulated Annealing":
-    jadwal = generate_schedule_simulated_annealing(course_list, preferensi_mahasiswa)
-
+        elif algo == "Backtracking":
+            jadwal = generate_schedule_backtracking(course_list, preferensi_mahasiswa)
+        elif algo == "Simulated Annealing":
+            jadwal = generate_schedule_simulated_annealing(course_list, preferensi_mahasiswa)
 
         end = time.time()
         if jadwal:
