@@ -58,7 +58,6 @@ def generate_schedule(selected_courses, all_courses_data):
         slot = best[i] if best and best[i] else "Tidak tersedia slot tanpa bentrok"
         hasil.append((name, slot))
 
-    # Saran slot tak terpakai
     all_slots = {(c.course_name, s) for c in all_courses_data for s in c.slots}
     used = {(c, s) for c, s in hasil if s != "Tidak tersedia slot tanpa bentrok"}
     saran = sorted(list(all_slots - used))
@@ -70,80 +69,65 @@ st.set_page_config(layout="wide")
 st.title("📅 Aplikasi Penjadwalan Kuliah Otomatis")
 
 if 'courses' not in st.session_state:
-    st.session_state.courses = []
+    st.session_state.courses = [
+        Course("Dasar Digital", ["Senin 10:00-12:00", "Selasa 10:00-12:00", "Rabu 13:00-15:00"]),
+        Course("Struktur Data", ["Senin 14:00-16:00", "Selasa 08:00-10:00", "Rabu 10:00-12:00"]),
+        Course("Interaksi Manusia dan Komputer", ["Senin 08:00-10:00", "Kamis 14:00-16:00", "Jumat 13:00-15:00"]),
+        Course("Sistem Operasi", ["Selasa 07:00-09:00", "Kamis 10:00-12:00", "Jumat 10:00-12:00"]),
+        Course("Kecerdasan Buatan", ["Senin 13:00-15:00", "Rabu 14:00-16:00", "Jumat 08:00-10:00"]),
+        Course("Grafika Komputer", ["Selasa 13:00-15:00", "Rabu 15:00-17:00", "Jumat 10:00-12:00"]),
+        Course("Desain dan Analisis Algoritma", ["Rabu 08:00-10:00", "Kamis 13:00-15:00", "Jumat 14:00-16:00"]),
+        Course("Bahasa Indonesia", ["Senin 13:00-15:00", "Selasa 16:00-18:00", "Rabu 08:00-10:00"]),
+        Course("Metode Numerik", ["Rabu 10:00-12:00", "Kamis 13:00-15:00", "Jumat 15:00-17:00"]),
+        Course("Pemrograman Web", ["Selasa 10:00-12:00", "Kamis 14:00-16:00", "Jumat 08:00-10:00"]),
+        Course("Sistem Management Database", ["Senin 15:00-17:00", "Rabu 10:00-12:00", "Kamis 14:00-16:00"]),
+        Course("Etika Profesi", ["Senin 08:00-10:00", "Selasa 10:00-12:00", "Rabu 13:00-15:00"]),
+        Course("Pemrograman Visual", ["Senin 14:00-16:00", "Selasa 08:00-10:00", "Rabu 10:00-12:00"]),
+        Course("Tekno Enterpreneur", ["Senin 13:00-15:00", "Selasa 14:00-16:00", "Jumat 10:00-12:00"]),
+        Course("Statistika", ["Rabu 08:00-10:00", "Kamis 13:00-15:00", "Jumat 14:00-16:00"]),
+        Course("Organisasi dan Arsitektur Komputer", ["Selasa 10:00-12:00", "Kamis 14:00-16:00", "Jumat 08:00-10:00"]),
+    ]
 
 # ======================== Kolom 1: Input Data ========================
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.header("1. Masukkan Mata Kuliah")
-    with st.form("form_add_course"):
-        nama = st.text_input("Nama Mata Kuliah", key="new_course_name_input")
-        slot_str = st.text_area("Slot Waktu (pisahkan dengan koma)", key="new_course_slots_input")
-        submitted = st.form_submit_button("Tambahkan Mata Kuliah")
-
-        if submitted:
-            if nama.strip() and slot_str.strip():
-                slot_list = [s.strip() for s in slot_str.split(",") if s.strip()]
-                if len(st.session_state.courses) < 16:
-                    st.session_state.courses.append(Course(nama.strip(), slot_list))
-                    st.success(f"✅ '{nama}' berhasil ditambahkan.")
-                else:
-                    st.warning("⚠️ Maksimal 16 mata kuliah.")
-            else:
-                st.warning("⚠️ Nama dan slot tidak boleh kosong.")
-
-    st.subheader("📚 Mata Kuliah yang Tersedia:")
+    st.header("📚 Mata Kuliah yang Tersedia")
     if st.session_state.courses:
         df = pd.DataFrame({
             "Mata Kuliah": [c.course_name for c in st.session_state.courses],
             "Slot Tersedia": [', '.join(c.slots) for c in st.session_state.courses]
         })
-        st.dataframe(df, height=250)
-        if st.button("🗑 Bersihkan Semua"):
-            st.session_state.courses = []
-            st.rerun()
-    else:
-        st.info("Belum ada data mata kuliah.")
+        st.dataframe(df, height=300)
 
 # ======================== Kolom 2: Penjadwalan ========================
 with col2:
     st.header("2. Pilih Mata Kuliah untuk Dijadwalkan")
-    if st.session_state.courses:
-        course_names = [c.course_name for c in st.session_state.courses]
-        selected = st.multiselect("Pilih mata kuliah:", course_names)
+    course_names = [c.course_name for c in st.session_state.courses]
+    selected = st.multiselect("Pilih mata kuliah:", course_names)
 
-        if st.button("📆 Buat Jadwal Optimal"):
-            if len(selected) < 3:
-                st.warning("Pilih minimal 3 mata kuliah.")
+    if st.button("📆 Buat Jadwal Optimal"):
+        if len(selected) < 3:
+            st.warning("Pilih minimal 3 mata kuliah.")
+        else:
+            jadwal, saran = generate_schedule(selected, st.session_state.courses)
+            data = []
+            valid = 0
+            for name, slot in jadwal:
+                if slot.startswith("Tidak"):
+                    data.append({"Mata Kuliah": name, "Slot Jadwal": f"⚠️ {slot}"})
+                else:
+                    data.append({"Mata Kuliah": name, "Slot Jadwal": slot})
+                    valid += 1
+
+            if valid >= 3:
+                st.success(f"{valid} mata kuliah berhasil dijadwalkan.")
             else:
-                jadwal, saran = generate_schedule(selected, st.session_state.courses)
-                jadwal_data = []
-                sukses = 0
+                st.error("Jadwal valid kurang dari 3.")
 
-                for nama, slot in jadwal:
-                    if slot.startswith("Tidak"):
-                        jadwal_data.append({"Mata Kuliah": nama, "Slot Jadwal": f"⚠️ {slot}"})
-                    else:
-                        jadwal_data.append({"Mata Kuliah": nama, "Slot Jadwal": slot})
-                        sukses += 1
-
-                if sukses >= 3:
-                    st.success(f"🎉 {sukses} mata kuliah berhasil dijadwalkan.")
-                else:
-                    st.error("❌ Jadwal kurang dari 3 matkul valid.")
-
-                st.dataframe(pd.DataFrame(jadwal_data), hide_index=True)
-
-                st.markdown("---")
-                st.subheader("🕐 Saran Slot Lain:")
-                if saran:
-                    df_saran = pd.DataFrame(saran, columns=["Mata Kuliah", "Slot Waktu"])
-                    st.dataframe(df_saran, hide_index=True)
-                else:
-                    st.info("Tidak ada saran slot lain.")
-    else:
-        st.info("Silakan isi daftar mata kuliah terlebih dahulu.")
-
-st.markdown("---")
-st.caption("📌 Jadwal akan hilang saat halaman di-refresh. Simpan secara manual jika dibutuhkan.")
+            st.dataframe(pd.DataFrame(data), hide_index=True)
+            st.subheader("Saran Slot Lain")
+            if saran:
+                st.dataframe(pd.DataFrame(saran, columns=["Mata Kuliah", "Slot Waktu"]), hide_index=True)
+            else:
+                st.info("Tidak ada slot saran tersedia.")
