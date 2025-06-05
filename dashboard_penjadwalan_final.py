@@ -1,13 +1,21 @@
 import streamlit as st
 
-st.set_page_config(page_title="Dashboard Jadwal Otomatis", layout="wide")
+st.set_page_config(page_title="Dashboard Jadwal Kuliah Otomatis", layout="wide")
 
-# Data slot
+# Slot waktu
 days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat']
 times = ['08:00-10:00', '10:00-12:00', '13:00-15:00', '15:00-17:00']
 all_slots = [f"{day} {time}" for day in days for time in times]
 
-# Kelas & Fungsi
+# Daftar tetap nama matkul
+matkul_list = [
+    "Dasar digital", "Struktur data", "Interaksi manusia dan komputer", "Sistem operasi",
+    "Kecerdasan buatan", "Grafika komputer", "Desain dan analisis algoritma", "Bahasa Indonesia",
+    "Metode numerik", "Pemrograman web", "Sistem management database", "Etika profesi",
+    "Pemrograman visual", "Tekno enterpreneur", "Statistika", "Organisasi dan arsitektur komputer"
+]
+
+# Class dan fungsi
 class Course:
     def __init__(self, course_name):
         self.course_name = course_name
@@ -36,18 +44,26 @@ def generate_schedule_from_choices(courses):
         schedule[i] = best_slot
     return [(courses[i].course_name, schedule[i] if schedule[i] else "Tidak tersedia jadwal") for i in range(n)]
 
-# UI Input
-st.title("📅 Dashboard Jadwal Otomatis (4 Matkul)")
+# UI Awal
+st.title("📅 Dashboard Jadwal Kuliah Otomatis")
+jumlah_matkul = st.number_input("Berapa mata kuliah yang ingin kamu ambil?", min_value=1, max_value=16, value=4, step=1)
 
 with st.form("jadwal_form"):
+    st.subheader("🎓 Input Mata Kuliah dan Slot Pilihan")
+
     course_inputs = []
-    for i in range(4):
-        st.markdown(f"### Mata Kuliah {i+1}")
-        course_name = st.text_input(f"Nama Mata Kuliah {i+1}", key=f"name_{i}")
+    used_matkuls = set()
+
+    for i in range(jumlah_matkul):
+        available_options = [m for m in matkul_list if m not in used_matkuls]
+        selected_matkul = st.selectbox(f"Mata Kuliah {i+1}", options=available_options, key=f"matkul_{i}")
+        used_matkuls.add(selected_matkul)
+
         selected_slots = st.multiselect(
-            f"Pilih 3 slot waktu untuk matkul {i+1}:", all_slots, max_selections=3, key=f"slots_{i}"
+            f"Pilih 3 slot waktu untuk {selected_matkul}:", all_slots,
+            max_selections=3, key=f"slots_{i}"
         )
-        course_inputs.append((course_name, selected_slots))
+        course_inputs.append((selected_matkul, selected_slots))
 
     submitted = st.form_submit_button("🔍 Cari Jadwal")
 
