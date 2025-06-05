@@ -26,7 +26,7 @@ if "selected_courses" not in st.session_state:
 if "schedule" not in st.session_state:
     st.session_state.schedule = []
 
-# Sidebar
+# Sidebar input
 st.sidebar.header("📚 Pilih Mata Kuliah")
 selected_course = st.sidebar.selectbox("Pilih satu mata kuliah", st.session_state.selected_courses)
 
@@ -35,22 +35,20 @@ selected_day = st.sidebar.selectbox("Pilih Hari", WEEKDAYS)
 selected_time = st.sidebar.selectbox("Pilih Jam", TIME_SLOTS)
 selected_slot = f"{selected_day} {selected_time}"
 
-# Fungsi bantu
-
+# Fungsi untuk validasi bentrok waktu
 def do_slots_overlap(slot1, slot2):
     if slot1 and slot2:
         day1, time1 = slot1.split(" ")
         day2, time2 = slot2.split(" ")
         if day1 != day2:
             return False
-        s1, e1 = map(lambda t: int(t.split(":" )[0])*60 + int(t.split(":" )[1]), time1.split("-"))
-        s2, e2 = map(lambda t: int(t.split(":" )[0])*60 + int(t.split(":" )[1]), time2.split("-"))
+        s1, e1 = map(lambda t: int(t.split(":")[0])*60 + int(t.split(":")[1]), time1.split("-"))
+        s2, e2 = map(lambda t: int(t.split(":")[0])*60 + int(t.split(":")[1]), time2.split("-"))
         return s1 < e2 and s2 < e1
     return False
 
-# Tombol eksekusi
+# Tombol untuk menyimpan jadwal
 if st.sidebar.button("📅 Buat Jadwal"):
-    # Cek apakah slot bentrok dengan yang sudah dijadwalkan
     is_conflict = False
     for _, s in st.session_state.schedule:
         if do_slots_overlap(selected_slot, s):
@@ -58,14 +56,13 @@ if st.sidebar.button("📅 Buat Jadwal"):
             break
 
     if is_conflict:
-        st.error("Jadwal bentrok dengan mata kuliah yang sudah dipilih.")
+        st.error("❌ Jadwal bentrok dengan mata kuliah yang sudah dipilih.")
     else:
-        # Tambahkan jadwal
         st.session_state.schedule.append((selected_course, selected_slot))
         st.session_state.selected_courses.remove(selected_course)
-        st.success(f"Jadwal untuk '{selected_course}' berhasil ditambahkan!")
+        st.success(f"✅ Jadwal untuk '{selected_course}' berhasil ditambahkan!")
 
-# Tampilkan jadwal yang sudah dibuat
+# Tampilkan tabel jadwal
 st.subheader("📊 Jadwal Kuliah Anda")
 if st.session_state.schedule:
     df = pd.DataFrame(st.session_state.schedule, columns=["Mata Kuliah", "Slot Waktu"])
